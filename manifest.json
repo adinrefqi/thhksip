@@ -1,0 +1,21 @@
+{
+  "name": "Sistem Manajemen Nilai",
+  "short_name": "SistemNilai",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "description": "Aplikasi Manajemen Nilai dan Kehadiran Siswa",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2995/2995459.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2995/2995459.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
