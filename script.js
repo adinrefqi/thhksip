@@ -3029,9 +3029,9 @@ function populateLegerSignatures() {
     const legerTanggal = document.getElementById('leger-tanggal-cetak');
 
     if (legerKepsekNama) legerKepsekNama.textContent = settings.kepalaSekolahNama || '.........................';
-    if (legerKepsekNip) legerKepsekNip.textContent = settings.kepalaSekolahNip ? `NIP. ${settings.kepalaSekolahNip}` : 'NIP. .........................';
+    if (legerKepsekNip) legerKepsekNip.textContent = settings.kepalaSekolahNip ? `NIY. ${settings.kepalaSekolahNip}` : 'NIY. .........................';
     if (legerGuruNama) legerGuruNama.textContent = settings.guruMapelNama || '.........................';
-    if (legerGuruNip) legerGuruNip.textContent = settings.guruMapelNip ? `NIP. ${settings.guruMapelNip}` : 'NIP. .........................';
+    if (legerGuruNip) legerGuruNip.textContent = settings.guruMapelNip ? `NIY. ${settings.guruMapelNip}` : 'NIY. .........................';
     if (legerTanggal) legerTanggal.textContent = tanggalFormatted;
 
     // Rekap Kehadiran
@@ -3042,9 +3042,9 @@ function populateLegerSignatures() {
     const rekapTanggal = document.getElementById('rekap-tanggal-cetak');
 
     if (rekapKepsekNama) rekapKepsekNama.textContent = settings.kepalaSekolahNama || '.........................';
-    if (rekapKepsekNip) rekapKepsekNip.textContent = settings.kepalaSekolahNip ? `NIP. ${settings.kepalaSekolahNip}` : 'NIP. .........................';
+    if (rekapKepsekNip) rekapKepsekNip.textContent = settings.kepalaSekolahNip ? `NIY. ${settings.kepalaSekolahNip}` : 'NIY. .........................';
     if (rekapGuruNama) rekapGuruNama.textContent = settings.guruMapelNama || '.........................';
-    if (rekapGuruNip) rekapGuruNip.textContent = settings.guruMapelNip ? `NIP. ${settings.guruMapelNip}` : 'NIP. .........................';
+    if (rekapGuruNip) rekapGuruNip.textContent = settings.guruMapelNip ? `NIY. ${settings.guruMapelNip}` : 'NIY. .........................';
     if (rekapTanggal) rekapTanggal.textContent = tanggalFormatted;
 }
 

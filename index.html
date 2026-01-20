@@ -712,7 +712,7 @@
                                 <br><br><br>
                                 <p style="text-decoration: underline; font-weight: bold;"
                                     id="leger-kepala-sekolah-nama">.........................</p>
-                                <p id="leger-kepala-sekolah-nip">NIP. .........................</p>
+                                <p id="leger-kepala-sekolah-nip">NIY. .........................</p>
                             </div>
                             <div style="text-align: center; width: 30%;">
                                 <p>Tegal, <span id="leger-tanggal-cetak">.........................</span></p>
@@ -720,7 +720,7 @@
                                 <br><br><br>
                                 <p style="text-decoration: underline; font-weight: bold;" id="leger-guru-mapel-nama">
                                     .........................</p>
-                                <p id="leger-guru-mapel-nip">NIP. .........................</p>
+                                <p id="leger-guru-mapel-nip">NIY. .........................</p>
                             </div>
                         </div>
                     </div>
@@ -826,7 +826,7 @@
                                 <br><br><br>
                                 <p style="text-decoration: underline; font-weight: bold;"
                                     id="rekap-kepala-sekolah-nama">.........................</p>
-                                <p id="rekap-kepala-sekolah-nip">NIP. .........................</p>
+                                <p id="rekap-kepala-sekolah-nip">NIY. .........................</p>
                             </div>
                             <div style="text-align: center; width: 30%;">
                                 <p>Tegal, <span id="rekap-tanggal-cetak">.........................</span></p>
@@ -834,7 +834,7 @@
                                 <br><br><br>
                                 <p style="text-decoration: underline; font-weight: bold;" id="rekap-guru-mapel-nama">
                                     .........................</p>
-                                <p id="rekap-guru-mapel-nip">NIP. .........................</p>
+                                <p id="rekap-guru-mapel-nip">NIY. .........................</p>
                             </div>
                         </div>
                     </div>
@@ -850,31 +850,41 @@
 
                     <!-- Pengaturan Cetak Leger -->
                     <div class="settings-section"
-                        style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 15px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
-                        <h4 style="margin: 0 0 15px 0; color: #334155; display: flex; align-items: center; gap: 10px;">
-                            <i class="fa-solid fa-print" style="color: #6366f1;"></i> Pengaturan Cetak Leger
+                        style="border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin: 15px; background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%);">
+                        <h4
+                            style="margin: 0 0 15px 0; color: var(--text-primary, #e2e8f0); display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-print" style="color: #818cf8;"></i> Pengaturan Cetak Leger
                         </h4>
-                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 15px;">
+                        <p class="text-muted"
+                            style="font-size: 0.875rem; margin-bottom: 15px; color: var(--text-secondary, #94a3b8);">
                             Isi data berikut agar muncul otomatis pada hasil cetak Leger Nilai dan Rekap Kehadiran.
                         </p>
                         <div class="filters-grid" style="gap: 15px;">
                             <div class="form-group" style="margin: 0;">
-                                <label style="font-weight: 600; font-size: 0.875rem;">Nama Kepala Sekolah</label>
+                                <label
+                                    style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary, #e2e8f0);">Nama
+                                    Kepala Sekolah</label>
                                 <input type="text" id="setting-kepala-sekolah-nama" class="form-control"
                                     placeholder="Contoh: Drs. Ahmad Sudirman, M.Pd." onchange="saveSettingLeger()">
                             </div>
                             <div class="form-group" style="margin: 0;">
-                                <label style="font-weight: 600; font-size: 0.875rem;">NIP Kepala Sekolah</label>
+                                <label
+                                    style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary, #e2e8f0);">NIY
+                                    Kepala Sekolah</label>
                                 <input type="text" id="setting-kepala-sekolah-nip" class="form-control"
                                     placeholder="Contoh: 196505151990031002" onchange="saveSettingLeger()">
                             </div>
                             <div class="form-group" style="margin: 0;">
-                                <label style="font-weight: 600; font-size: 0.875rem;">Nama Guru Mata Pelajaran</label>
+                                <label
+                                    style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary, #e2e8f0);">Nama
+                                    Guru Mata Pelajaran</label>
                                 <input type="text" id="setting-guru-mapel-nama" class="form-control"
                                     placeholder="Contoh: Siti Aminah, S.Pd." onchange="saveSettingLeger()">
                             </div>
                             <div class="form-group" style="margin: 0;">
-                                <label style="font-weight: 600; font-size: 0.875rem;">NIP Guru Mata Pelajaran</label>
+                                <label
+                                    style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary, #e2e8f0);">NIY
+                                    Guru Mata Pelajaran</label>
                                 <input type="text" id="setting-guru-mapel-nip" class="form-control"
                                     placeholder="Contoh: 198003102005012003" onchange="saveSettingLeger()">
                             </div>
