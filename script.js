@@ -530,7 +530,7 @@ async function loadData() {
             sb.from('kelas').select('*').eq('tahun_ajaran_id', activeTahunAjaran.id),
             sb.from('siswa').select('*').eq('tahun_ajaran_id', activeTahunAjaran.id),
             sb.from('mapel').select('*'),
-            sb.from('kategori').select('*'),
+            sb.from('kategori').select('*').order('urutan', { ascending: true }),
             sb.from('jurnal').select('*').eq('semester_id', activeSemester.id),
             sb.from('bobot').select('*'),
             sb.from('nilai').select('*').eq('semester_id', activeSemester.id),
@@ -1160,12 +1160,25 @@ async function addKategori() {
     if (!nama) return alert('Nama kategori harus diisi!');
     if (jumlah < 1 || jumlah > 20) return alert('Jumlah komponen harus antara 1-20!');
 
+    // Calculate urutan for new kategori (highest + 1)
+    let urutan = 0;
+    if (!id) {
+        // New kategori - get max urutan and add 1
+        const maxUrutan = appData.kategori.reduce((max, k) => Math.max(max, k.urutan || 0), 0);
+        urutan = maxUrutan + 1;
+    } else {
+        // Editing existing - keep the current urutan
+        const existingKategori = appData.kategori.find(k => k.id === id);
+        urutan = existingKategori ? existingKategori.urutan : 0;
+    }
+
     const kategoriData = {
         id: id || generateId(),
         nama_kategori: nama,
         tipe_kategori: tipe,
         jumlah_komponen: jumlah,
-        prefix_komponen: prefix
+        prefix_komponen: prefix,
+        urutan: urutan
     };
 
     const { error } = await sb.from('kategori').upsert([kategoriData]);
@@ -1178,6 +1191,9 @@ async function addKategori() {
     } else {
         appData.kategori.push(kategoriData);
     }
+
+    // Re-sort after adding/editing
+    appData.kategori.sort((a, b) => (a.urutan || 0) - (b.urutan || 0));
 
     renderKategoriTable();
     closeModal('modal-kategori');
@@ -1242,7 +1258,7 @@ async function deleteKategori(id) {
     }
 }
 
-// Move kategori up or down
+// Move kategori up or down - Persistent ordering in database
 async function moveKategori(id, direction) {
     const currentIndex = appData.kategori.findIndex(k => k.id === id);
     if (currentIndex === -1) return;
@@ -1252,21 +1268,41 @@ async function moveKategori(id, direction) {
     // Boundary check
     if (newIndex < 0 || newIndex >= appData.kategori.length) return;
 
-    // Swap positions in local array
-    const temp = appData.kategori[currentIndex];
-    appData.kategori[currentIndex] = appData.kategori[newIndex];
-    appData.kategori[newIndex] = temp;
+    // Get the two items that will be swapped
+    const currentKategori = appData.kategori[currentIndex];
+    const swapKategori = appData.kategori[newIndex];
 
-    // Update order field in database (if you have an 'urutan' column)
-    // For now, we'll just re-render. If you want persistent ordering,
-    // you'll need to add an 'urutan' column to the kategori table
-    // and update it here.
+    // Swap urutan values
+    const tempUrutan = currentKategori.urutan || currentIndex;
+    currentKategori.urutan = swapKategori.urutan || newIndex;
+    swapKategori.urutan = tempUrutan;
+
+    // Swap positions in local array
+    appData.kategori[currentIndex] = swapKategori;
+    appData.kategori[newIndex] = currentKategori;
+
+    // Update order in database - save both categories
+    try {
+        const updates = [
+            sb.from('kategori').update({ urutan: currentKategori.urutan }).eq('id', currentKategori.id),
+            sb.from('kategori').update({ urutan: swapKategori.urutan }).eq('id', swapKategori.id)
+        ];
+
+        const results = await Promise.all(updates);
+        const hasError = results.some(r => r.error);
+
+        if (hasError) {
+            console.error('Error updating urutan:', results.map(r => r.error).filter(Boolean));
+            // Optionally show alert but don't block UI
+        } else {
+            console.log(`✅ Kategori ${currentKategori.nama_kategori} moved ${direction} - urutan persisted`);
+        }
+    } catch (err) {
+        console.error('Failed to update urutan in database:', err);
+    }
 
     // Re-render table with animation effect
     renderKategoriTable();
-
-    // Optional: Show feedback
-    console.log(`Kategori ${id} moved ${direction}`);
 }
 
 // --- JURNAL MANAGEMENT ---
