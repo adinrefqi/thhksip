@@ -1,21 +1,22 @@
 {
-  "name": "Sistem Manajemen Nilai",
-  "short_name": "SistemNilai",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
-  "description": "Aplikasi Manajemen Nilai dan Kehadiran Siswa",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/2995/2995459.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/2995/2995459.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    "name": "Sistem Manajemen Nilai",
+    "short_name": "SINTADU",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#4f46e5",
+    "description": "Aplikasi Manajemen Nilai SMP Tunas Hidup Harapan Kita",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "logo.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "logo.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
 }
