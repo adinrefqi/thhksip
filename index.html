@@ -683,7 +683,7 @@
                     <div id="leger-print-area" class="mt-4">
                         <div class="leger-header-info" style="display: none; text-align: center; margin-bottom: 20px;">
                             <h2 style="margin: 0; font-size: 18px; text-transform: uppercase;">LEGER NILAI SISWA</h2>
-                            <h3 style="margin: 5px 0; font-size: 16px;">SD TUNAS HIDUP HARAPAN KITA</h3>
+                            <h3 style="margin: 5px 0; font-size: 16px;">SMP TUNAS HIDUP HARAPAN KITA</h3>
                             <p style="margin: 0; font-size: 14px;">
                                 Tahun Ajaran: <span id="leger-ta-display">-</span> |
                                 Semester: <span id="leger-sem-display">-</span> |
@@ -710,15 +710,17 @@
                                 <p>Mengetahui,</p>
                                 <p>Kepala Sekolah</p>
                                 <br><br><br>
-                                <p style="text-decoration: underline; font-weight: bold;">.........................</p>
-                                <p>NIP. .........................</p>
+                                <p style="text-decoration: underline; font-weight: bold;"
+                                    id="leger-kepala-sekolah-nama">.........................</p>
+                                <p id="leger-kepala-sekolah-nip">NIP. .........................</p>
                             </div>
                             <div style="text-align: center; width: 30%;">
-                                <p>Tegal, .........................</p>
-                                <p>Wali Kelas</p>
+                                <p>Tegal, <span id="leger-tanggal-cetak">.........................</span></p>
+                                <p>Guru Mata Pelajaran</p>
                                 <br><br><br>
-                                <p style="text-decoration: underline; font-weight: bold;">.........................</p>
-                                <p>NIP. .........................</p>
+                                <p style="text-decoration: underline; font-weight: bold;" id="leger-guru-mapel-nama">
+                                    .........................</p>
+                                <p id="leger-guru-mapel-nip">NIP. .........................</p>
                             </div>
                         </div>
                     </div>
@@ -785,7 +787,7 @@
                         <div class="rekap-header-info" style="text-align: center; margin-bottom: 20px;">
                             <h2 style="margin: 0; font-size: 18px; text-transform: uppercase;">REKAP KEHADIRAN SISWA
                             </h2>
-                            <h3 style="margin: 5px 0; font-size: 16px;">SD TUNAS HIDUP HARAPAN KITA</h3>
+                            <h3 style="margin: 5px 0; font-size: 16px;">SMP TUNAS HIDUP HARAPAN KITA</h3>
                             <p style="margin: 0; font-size: 14px;">
                                 Tahun Ajaran: <span id="rekap-ta-display">-</span> |
                                 Semester: <span id="rekap-sem-display">-</span>
@@ -822,15 +824,17 @@
                                 <p>Mengetahui,</p>
                                 <p>Kepala Sekolah</p>
                                 <br><br><br>
-                                <p style="text-decoration: underline; font-weight: bold;">.........................</p>
-                                <p>NIP. .........................</p>
+                                <p style="text-decoration: underline; font-weight: bold;"
+                                    id="rekap-kepala-sekolah-nama">.........................</p>
+                                <p id="rekap-kepala-sekolah-nip">NIP. .........................</p>
                             </div>
                             <div style="text-align: center; width: 30%;">
-                                <p>Tegal, .........................</p>
-                                <p>Guru Mapel</p>
+                                <p>Tegal, <span id="rekap-tanggal-cetak">.........................</span></p>
+                                <p>Guru Mata Pelajaran</p>
                                 <br><br><br>
-                                <p style="text-decoration: underline; font-weight: bold;">.........................</p>
-                                <p>NIP. .........................</p>
+                                <p style="text-decoration: underline; font-weight: bold;" id="rekap-guru-mapel-nama">
+                                    .........................</p>
+                                <p id="rekap-guru-mapel-nip">NIP. .........................</p>
                             </div>
                         </div>
                     </div>
@@ -843,6 +847,46 @@
                     <div class="card-header">
                         <h3>Manajemen Data</h3>
                     </div>
+
+                    <!-- Pengaturan Cetak Leger -->
+                    <div class="settings-section"
+                        style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 15px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+                        <h4 style="margin: 0 0 15px 0; color: #334155; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-print" style="color: #6366f1;"></i> Pengaturan Cetak Leger
+                        </h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 15px;">
+                            Isi data berikut agar muncul otomatis pada hasil cetak Leger Nilai dan Rekap Kehadiran.
+                        </p>
+                        <div class="filters-grid" style="gap: 15px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-weight: 600; font-size: 0.875rem;">Nama Kepala Sekolah</label>
+                                <input type="text" id="setting-kepala-sekolah-nama" class="form-control"
+                                    placeholder="Contoh: Drs. Ahmad Sudirman, M.Pd." onchange="saveSettingLeger()">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-weight: 600; font-size: 0.875rem;">NIP Kepala Sekolah</label>
+                                <input type="text" id="setting-kepala-sekolah-nip" class="form-control"
+                                    placeholder="Contoh: 196505151990031002" onchange="saveSettingLeger()">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-weight: 600; font-size: 0.875rem;">Nama Guru Mata Pelajaran</label>
+                                <input type="text" id="setting-guru-mapel-nama" class="form-control"
+                                    placeholder="Contoh: Siti Aminah, S.Pd." onchange="saveSettingLeger()">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label style="font-weight: 600; font-size: 0.875rem;">NIP Guru Mata Pelajaran</label>
+                                <input type="text" id="setting-guru-mapel-nip" class="form-control"
+                                    placeholder="Contoh: 198003102005012003" onchange="saveSettingLeger()">
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                            <button class="btn-primary" onclick="saveSettingLeger()">
+                                <i class="fa-solid fa-save"></i> Simpan Pengaturan
+                            </button>
+                            <span id="setting-save-status" class="text-muted" style="font-size: 0.8rem;"></span>
+                        </div>
+                    </div>
+
                     <div class="data-actions">
                         <div class="action-card">
                             <i class="fa-solid fa-download"></i>

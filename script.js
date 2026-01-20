@@ -2576,6 +2576,11 @@ async function printRekapKehadiran() {
     // Clone rows to print table
     printTableBody.innerHTML = tbody.innerHTML;
 
+    // Populate signature names from settings
+    if (typeof populateLegerSignatures === 'function') {
+        populateLegerSignatures();
+    }
+
     // Trigger Print
     window.print();
 }
@@ -2898,6 +2903,10 @@ async function renderLegerTable() {
 }
 
 function printLeger() {
+    // Populate signature names from settings
+    if (typeof populateLegerSignatures === 'function') {
+        populateLegerSignatures();
+    }
     window.print();
 }
 
@@ -2924,6 +2933,139 @@ printStyle.innerHTML = `
 `;
 document.head.appendChild(printStyle);
 
+// ===================================================
+// LEGER PRINT SETTINGS - Kepala Sekolah & Guru Mapel
+// ===================================================
+const LEGER_SETTINGS_KEY = 'sistem_nilai_leger_settings';
+
+// Load leger settings from localStorage
+function loadSettingLeger() {
+    try {
+        const saved = localStorage.getItem(LEGER_SETTINGS_KEY);
+        if (saved) {
+            const settings = JSON.parse(saved);
+
+            // Populate form fields
+            const kepsekNama = document.getElementById('setting-kepala-sekolah-nama');
+            const kepsekNip = document.getElementById('setting-kepala-sekolah-nip');
+            const guruNama = document.getElementById('setting-guru-mapel-nama');
+            const guruNip = document.getElementById('setting-guru-mapel-nip');
+
+            if (kepsekNama) kepsekNama.value = settings.kepalaSekolahNama || '';
+            if (kepsekNip) kepsekNip.value = settings.kepalaSekolahNip || '';
+            if (guruNama) guruNama.value = settings.guruMapelNama || '';
+            if (guruNip) guruNip.value = settings.guruMapelNip || '';
+
+            console.log('✅ Leger settings loaded');
+        }
+    } catch (err) {
+        console.error('Error loading leger settings:', err);
+    }
+}
+
+// Save leger settings to localStorage
+function saveSettingLeger() {
+    try {
+        const settings = {
+            kepalaSekolahNama: document.getElementById('setting-kepala-sekolah-nama')?.value || '',
+            kepalaSekolahNip: document.getElementById('setting-kepala-sekolah-nip')?.value || '',
+            guruMapelNama: document.getElementById('setting-guru-mapel-nama')?.value || '',
+            guruMapelNip: document.getElementById('setting-guru-mapel-nip')?.value || ''
+        };
+
+        localStorage.setItem(LEGER_SETTINGS_KEY, JSON.stringify(settings));
+
+        // Show save feedback
+        const statusEl = document.getElementById('setting-save-status');
+        if (statusEl) {
+            statusEl.textContent = '✅ Tersimpan!';
+            statusEl.style.color = '#10b981';
+            setTimeout(() => {
+                statusEl.textContent = '';
+            }, 2000);
+        }
+
+        console.log('✅ Leger settings saved');
+        return true;
+    } catch (err) {
+        console.error('Error saving leger settings:', err);
+        return false;
+    }
+}
+
+// Get leger settings
+function getLegerSettings() {
+    try {
+        const saved = localStorage.getItem(LEGER_SETTINGS_KEY);
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (err) {
+        console.error('Error getting leger settings:', err);
+    }
+    return {
+        kepalaSekolahNama: '',
+        kepalaSekolahNip: '',
+        guruMapelNama: '',
+        guruMapelNip: ''
+    };
+}
+
+// Populate signature areas for leger print
+function populateLegerSignatures() {
+    const settings = getLegerSettings();
+    const today = new Date();
+    const tanggalFormatted = today.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Leger Nilai
+    const legerKepsekNama = document.getElementById('leger-kepala-sekolah-nama');
+    const legerKepsekNip = document.getElementById('leger-kepala-sekolah-nip');
+    const legerGuruNama = document.getElementById('leger-guru-mapel-nama');
+    const legerGuruNip = document.getElementById('leger-guru-mapel-nip');
+    const legerTanggal = document.getElementById('leger-tanggal-cetak');
+
+    if (legerKepsekNama) legerKepsekNama.textContent = settings.kepalaSekolahNama || '.........................';
+    if (legerKepsekNip) legerKepsekNip.textContent = settings.kepalaSekolahNip ? `NIP. ${settings.kepalaSekolahNip}` : 'NIP. .........................';
+    if (legerGuruNama) legerGuruNama.textContent = settings.guruMapelNama || '.........................';
+    if (legerGuruNip) legerGuruNip.textContent = settings.guruMapelNip ? `NIP. ${settings.guruMapelNip}` : 'NIP. .........................';
+    if (legerTanggal) legerTanggal.textContent = tanggalFormatted;
+
+    // Rekap Kehadiran
+    const rekapKepsekNama = document.getElementById('rekap-kepala-sekolah-nama');
+    const rekapKepsekNip = document.getElementById('rekap-kepala-sekolah-nip');
+    const rekapGuruNama = document.getElementById('rekap-guru-mapel-nama');
+    const rekapGuruNip = document.getElementById('rekap-guru-mapel-nip');
+    const rekapTanggal = document.getElementById('rekap-tanggal-cetak');
+
+    if (rekapKepsekNama) rekapKepsekNama.textContent = settings.kepalaSekolahNama || '.........................';
+    if (rekapKepsekNip) rekapKepsekNip.textContent = settings.kepalaSekolahNip ? `NIP. ${settings.kepalaSekolahNip}` : 'NIP. .........................';
+    if (rekapGuruNama) rekapGuruNama.textContent = settings.guruMapelNama || '.........................';
+    if (rekapGuruNip) rekapGuruNip.textContent = settings.guruMapelNip ? `NIP. ${settings.guruMapelNip}` : 'NIP. .........................';
+    if (rekapTanggal) rekapTanggal.textContent = tanggalFormatted;
+}
+
+// Override printLeger to populate signatures first
+const _originalPrintLeger = window.printLeger || function () { window.print(); };
+window.printLeger = function () {
+    populateLegerSignatures();
+    setTimeout(() => {
+        _originalPrintLeger();
+    }, 100);
+};
+
+// Also add for rekap kehadiran print
+const _originalPrintRekapKehadiran = window.printRekapKehadiran || function () { window.print(); };
+window.printRekapKehadiran = function () {
+    populateLegerSignatures();
+    setTimeout(() => {
+        _originalPrintRekapKehadiran();
+    }, 100);
+};
+
 // Init Helper
 const _origLoad = window.onload;
 window.onload = function () {
@@ -2931,6 +3073,7 @@ window.onload = function () {
     // Delay slightly to ensure data loaded if it's async
     setTimeout(() => {
         if (typeof renderLegerOptions === 'function') renderLegerOptions();
+        loadSettingLeger(); // Load leger settings on page load
     }, 2000);
 };
 
