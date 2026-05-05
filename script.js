@@ -517,10 +517,13 @@ async function loadData() {
         console.log('Loading data for:', activeTahunAjaran.nama_tahun_ajaran, '-', activeSemester.nama_semester);
 
         // Load data filtered by active tahun ajaran & semester
-        let jurnalQuery = sb.from('jurnal').select('*').eq('semester_id', activeSemester.id);
+        // Initialize lazy load data structure
+        appData.jurnal = [];
+        appData.kehadiran = [];
+        appData.nilai = {};
+
+        // Load referential data filtered by active tahun ajaran & semester
         let bobotQuery = sb.from('bobot').select('*');
-        let nilaiQuery = sb.from('nilai').select('*').eq('semester_id', activeSemester.id);
-        let kehadiranQuery = sb.from('kehadiran').select('*').eq('semester_id', activeSemester.id);
 
         if (currentUser && currentUser.role === 'guru') {
             try {
@@ -532,24 +535,13 @@ async function loadData() {
                 }
                 
                 if (parsedMapelIds.length > 0) {
-                    jurnalQuery = jurnalQuery.in('mapel_id', parsedMapelIds);
                     bobotQuery = bobotQuery.in('mapel_id', parsedMapelIds);
-                    nilaiQuery = nilaiQuery.in('mapel_id', parsedMapelIds);
-                    kehadiranQuery = kehadiranQuery.in('mapel_id', parsedMapelIds);
                 } else {
-                    // Jika mapel_ids kosong tapi role guru, kita set filter yang mustahil (agar kosong)
-                    jurnalQuery = jurnalQuery.eq('id', '00000000-0000-0000-0000-000000000000');
                     bobotQuery = bobotQuery.eq('mapel_id', '00000000-0000-0000-0000-000000000000');
-                    nilaiQuery = nilaiQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-                    kehadiranQuery = kehadiranQuery.eq('id', '00000000-0000-0000-0000-000000000000');
                 }
             } catch (e) {
                 console.error("Error parsing mapel_ids:", e);
-                // Fallback kosong jika parsing gagal
-                jurnalQuery = jurnalQuery.eq('id', '00000000-0000-0000-0000-000000000000');
                 bobotQuery = bobotQuery.eq('mapel_id', '00000000-0000-0000-0000-000000000000');
-                nilaiQuery = nilaiQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-                kehadiranQuery = kehadiranQuery.eq('id', '00000000-0000-0000-0000-000000000000');
             }
         }
 
@@ -558,77 +550,32 @@ async function loadData() {
             { data: siswa },
             { data: mapel },
             { data: kategori },
-            { data: jurnal },
-            { data: bobot },
-            { data: nilai },
-            { data: kehadiran }
+            { data: bobot }
         ] = await Promise.all([
             sb.from('kelas').select('*').eq('tahun_ajaran_id', activeTahunAjaran.id),
             sb.from('siswa').select('*').eq('tahun_ajaran_id', activeTahunAjaran.id),
             sb.from('mapel').select('*'),
             sb.from('kategori').select('*').order('urutan', { ascending: true }),
-            jurnalQuery,
-            bobotQuery,
-            nilaiQuery,
-            kehadiranQuery
+            bobotQuery
         ]);
 
         appData.kelas = kelas || [];
         appData.siswa = (siswa || []).map(s => ({ ...s, kelasId: s.kelas_id }));
         appData.mapel = mapel || [];
         appData.kategori = kategori || [];
-        appData.jurnal = (jurnal || []).map(j => ({ ...j, kelasId: j.kelas_id, mapelId: j.mapel_id }));
-        appData.kehadiran = (kehadiran || []).map(k => ({ ...k, kelasId: k.kelas_id, mapelId: k.mapel_id, siswaId: k.siswa_id }));
 
         // Transform Bobot
         appData.bobot = {};
         (bobot || []).forEach(b => {
             if (!appData.bobot[b.mapel_id]) appData.bobot[b.mapel_id] = {};
-            // V3: Store as object to include component count
             appData.bobot[b.mapel_id][b.kategori_id] = {
                 weight: b.nilai_bobot,
                 count: b.jumlah_komponen || 1
             };
         });
 
-        // Transform Nilai - V2: Handle komponen_ke
-        appData.nilai = {};
-        const gradeCount = (nilai || []).length;
-        console.log(`[DEBUG] Loaded ${gradeCount} grades from DB for Semester: ${activeSemester.nama_semester}`);
-
-        (nilai || []).forEach(n => {
-            if (!appData.nilai[n.siswa_id]) appData.nilai[n.siswa_id] = {};
-            if (!appData.nilai[n.siswa_id][n.mapel_id]) appData.nilai[n.siswa_id][n.mapel_id] = {};
-            if (!appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id]) {
-                appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id] = {};
-            }
-
-            let val = n.nilai;
-            // CHECK FOR LEGACY JSON STRING (e.g. {"k1":90})
-            if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
-                try {
-                    const parsed = JSON.parse(val);
-                    // Merge parsed legacy data
-                    Object.keys(parsed).forEach(k => {
-                        let compNum = 1;
-                        if (k.startsWith('k')) compNum = parseInt(k.substring(1)) || 1;
-                        else if (!isNaN(k)) compNum = parseInt(k);
-
-                        appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id][compNum] = parsed[k];
-                    });
-                    return; // Skip standard assignment
-                } catch (e) {
-                    console.warn("Failed to parse legacy nilai JSON", e);
-                }
-            }
-
-            // Standard assignment (New Format)
-            appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id][n.komponen_ke] = n.nilai;
-        });
-
-        if (gradeCount > 0) {
-            console.log('[DEBUG] Sample Transformed Data (Siswa ID: ' + nilai[0].siswa_id + '):', appData.nilai[nilai[0].siswa_id]);
-        }
+        // Add Lazy Loader Functions inside script or make them global
+        // Note: the lazy loader functions will be placed globally below loadData
 
         updateDashboardStats();
         renderAllTables();
@@ -658,6 +605,97 @@ function saveData() {
     // Deprecated in favor of direct DB calls
     console.log('Data saved to local state');
     updateDashboardStats();
+}
+
+// --- LAZY LOADERS ---
+
+async function fetchNilaiData(kelasId, mapelId, semesterId) {
+    if (!kelasId || !mapelId || !semesterId) return;
+    try {
+        let query = sb.from('nilai').select('*').eq('semester_id', semesterId).eq('mapel_id', mapelId);
+        
+        const { data: nilai, error } = await query;
+        if (error) throw error;
+
+        // Kosongkan nilai yang ada untuk mapel ini di memori agar digantikan yang baru
+        // Kita tidak menghapus objek keseluruhan agar properti siswa lain tidak terpengaruh,
+        // Tapi proses ini akan me-replace nilai di state.
+        (nilai || []).forEach(n => {
+            if (!appData.nilai[n.siswa_id]) appData.nilai[n.siswa_id] = {};
+            if (!appData.nilai[n.siswa_id][n.mapel_id]) appData.nilai[n.siswa_id][n.mapel_id] = {};
+            if (!appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id]) {
+                appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id] = {};
+            }
+
+            let val = n.nilai;
+            if (typeof val === 'string' && (val.trim().startsWith('{') || val.trim().startsWith('['))) {
+                try {
+                    const parsed = JSON.parse(val);
+                    Object.keys(parsed).forEach(k => {
+                        let compNum = 1;
+                        if (k.startsWith('k')) compNum = parseInt(k.substring(1)) || 1;
+                        else if (!isNaN(k)) compNum = parseInt(k);
+                        appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id][compNum] = parsed[k];
+                    });
+                    return;
+                } catch (e) {}
+            }
+            appData.nilai[n.siswa_id][n.mapel_id][n.kategori_id][n.komponen_ke] = n.nilai;
+        });
+    } catch (error) {
+        console.error('Error fetching nilai lazily:', error);
+    }
+}
+
+async function fetchKehadiranData(kelasId, mapelId, tanggal, semesterId) {
+    if (!semesterId) return;
+    try {
+        let query = sb.from('kehadiran').select('*').eq('semester_id', semesterId);
+        if (kelasId) query = query.eq('kelas_id', kelasId);
+        if (mapelId) query = query.eq('mapel_id', mapelId);
+        if (tanggal) query = query.eq('tanggal', tanggal);
+
+        const { data: kehadiran, error } = await query;
+        if (error) throw error;
+
+        // Hapus data lama yang sesuai scope filter
+        appData.kehadiran = appData.kehadiran.filter(k => {
+            const matchKelas = kelasId ? k.kelasId === kelasId : true;
+            const matchMapel = mapelId ? k.mapelId === mapelId : true;
+            const matchTanggal = tanggal ? k.tanggal === tanggal : true;
+            return !(matchKelas && matchMapel && matchTanggal);
+        });
+
+        (kehadiran || []).forEach(k => {
+            appData.kehadiran.push({ ...k, kelasId: k.kelas_id, mapelId: k.mapel_id, siswaId: k.siswa_id });
+        });
+    } catch (error) {
+        console.error('Error fetching kehadiran lazily:', error);
+    }
+}
+
+async function fetchJurnalData(kelasId, mapelId, semesterId) {
+    if (!semesterId) return;
+    try {
+        let query = sb.from('jurnal').select('*').eq('semester_id', semesterId);
+        if (kelasId) query = query.eq('kelas_id', kelasId);
+        if (mapelId) query = query.eq('mapel_id', mapelId);
+
+        const { data: jurnal, error } = await query;
+        if (error) throw error;
+
+        appData.jurnal = appData.jurnal.filter(j => {
+            const matchKelas = kelasId ? j.kelasId === kelasId : true;
+            const matchMapel = mapelId ? j.mapelId === mapelId : true;
+            return !(matchKelas && matchMapel);
+        });
+
+        (jurnal || []).forEach(j => {
+            appData.jurnal.push({ ...j, kelasId: j.kelas_id, mapelId: j.mapel_id });
+        });
+    } catch (error) {
+        console.error('Error fetching jurnal lazily:', error);
+    }
 }
 
 // Navigation
@@ -1490,9 +1528,17 @@ async function addJurnal() {
     document.getElementById('jurnal-siswa-list').innerHTML = '<p class="text-muted" style="text-align: center; font-size: 0.9rem;">Pilih Kelas untuk memuat daftar siswa.</p>';
 }
 
-function renderJurnalTable() {
+async function renderJurnalTable() {
     const tbody = document.getElementById('table-jurnal-body');
     if (!tbody) return;
+
+    const activeSemesterId = appData.activeSemester ? appData.activeSemester.id : null;
+    if (activeSemesterId) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center"><i class="fa fa-spinner fa-spin"></i> Memuat data jurnal...</td></tr>';
+        await fetchJurnalData(null, null, activeSemesterId);
+        await fetchKehadiranData(null, null, null, activeSemesterId); // Perlu agar kolom S/I/A tidak kosong
+    }
+
     tbody.innerHTML = '';
 
     // Sort by date descending
@@ -1736,7 +1782,7 @@ async function saveWeights() {
 }
 
 // --- INPUT NILAI ---
-function prepareInputNilai() {
+async function prepareInputNilai() {
     const kelasId = document.getElementById('input-kelas').value;
     const mapelId = document.getElementById('input-mapel').value;
     const kategoriId = document.getElementById('input-kategori').value;
@@ -1747,6 +1793,12 @@ function prepareInputNilai() {
         tbody.innerHTML = '<tr><td colspan="100" class="text-center">Pilih Kelas, Mapel, dan Kategori untuk memulai.</td></tr>';
         tableHead.innerHTML = '<th>No</th><th>Nama Siswa</th><th>Nilai (0-100)</th>';
         return;
+    }
+
+    const activeSemesterId = appData.activeSemester ? appData.activeSemester.id : null;
+    if (activeSemesterId) {
+        tbody.innerHTML = '<tr><td colspan="100" class="text-center"><i class="fa fa-spinner fa-spin"></i> Memuat data nilai...</td></tr>';
+        await fetchNilaiData(kelasId, mapelId, activeSemesterId);
     }
 
     const siswaInKelas = appData.siswa.filter(s => s.kelasId === kelasId);
@@ -2407,7 +2459,7 @@ async function handleStudentImport(input) {
 // function processStudentImport(data) { ... }
 
 // --- KEHADIRAN MANAGEMENT ---
-function renderInputKehadiranTable() {
+async function renderInputKehadiranTable() {
     const kelasId = document.getElementById('absensi-kelas').value;
     const mapelId = document.getElementById('absensi-mapel').value;
     const tanggal = document.getElementById('absensi-tanggal').value;
@@ -2416,6 +2468,12 @@ function renderInputKehadiranTable() {
     if (!kelasId || !mapelId || !tanggal) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">Pilih Kelas, Mapel, dan Tanggal untuk memulai.</td></tr>';
         return;
+    }
+
+    const activeSemesterId = appData.activeSemester ? appData.activeSemester.id : null;
+    if (activeSemesterId) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Memuat data kehadiran...</td></tr>';
+        await fetchKehadiranData(kelasId, mapelId, tanggal, activeSemesterId);
     }
 
     const siswaInKelas = appData.siswa.filter(s => s.kelasId === kelasId);
@@ -2517,7 +2575,7 @@ async function saveKehadiran() {
     return;
 }
 
-function renderRekapKehadiranTable() {
+async function renderRekapKehadiranTable() {
     const kelasId = document.getElementById('rekap-absensi-kelas').value;
     const mapelId = document.getElementById('rekap-absensi-mapel').value;
     const startDate = document.getElementById('rekap-absensi-start').valueAsDate;
@@ -2525,12 +2583,19 @@ function renderRekapKehadiranTable() {
     const tbody = document.querySelector('#view-rekap-kehadiran tbody');
 
     if (!tbody) return;
-    tbody.innerHTML = '';
 
     if (!kelasId || !mapelId) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center">Pilih Kelas dan Mata Pelajaran terlebih dahulu</td></tr>';
         return;
     }
+
+    const activeSemesterId = appData.activeSemester ? appData.activeSemester.id : null;
+    if (activeSemesterId) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center"><i class="fa fa-spinner fa-spin"></i> Memuat data rekap kehadiran...</td></tr>';
+        await fetchKehadiranData(kelasId, mapelId, null, activeSemesterId);
+    }
+
+    tbody.innerHTML = '';
 
     const siswaInKelas = appData.siswa.filter(s => s.kelasId === kelasId);
 
