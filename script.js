@@ -269,7 +269,7 @@ async function checkLogin() {
         } else {
             document.getElementById('login-overlay').classList.add('hidden');
             // Setelah login, cek dia Guru atau Admin
-            checkUserRole(session.user.id);
+            await checkUserRole(session.user.id);
         }
     } catch (err) {
         console.error("Error checking session:", err);
@@ -479,8 +479,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Run migration
     await ensureAcademicYear2025();
 
-    checkLogin();
-    loadData();
+    await checkLogin();
+    await loadData();
     setupNavigation();
     updateDashboardStats();
     renderAllTables();
@@ -517,6 +517,42 @@ async function loadData() {
         console.log('Loading data for:', activeTahunAjaran.nama_tahun_ajaran, '-', activeSemester.nama_semester);
 
         // Load data filtered by active tahun ajaran & semester
+        let jurnalQuery = sb.from('jurnal').select('*').eq('semester_id', activeSemester.id);
+        let bobotQuery = sb.from('bobot').select('*');
+        let nilaiQuery = sb.from('nilai').select('*').eq('semester_id', activeSemester.id);
+        let kehadiranQuery = sb.from('kehadiran').select('*').eq('semester_id', activeSemester.id);
+
+        if (currentUser && currentUser.role === 'guru') {
+            try {
+                let parsedMapelIds = [];
+                if (typeof currentUser.mapel_ids === 'string') {
+                    parsedMapelIds = JSON.parse(currentUser.mapel_ids);
+                } else if (Array.isArray(currentUser.mapel_ids)) {
+                    parsedMapelIds = currentUser.mapel_ids;
+                }
+                
+                if (parsedMapelIds.length > 0) {
+                    jurnalQuery = jurnalQuery.in('mapel_id', parsedMapelIds);
+                    bobotQuery = bobotQuery.in('mapel_id', parsedMapelIds);
+                    nilaiQuery = nilaiQuery.in('mapel_id', parsedMapelIds);
+                    kehadiranQuery = kehadiranQuery.in('mapel_id', parsedMapelIds);
+                } else {
+                    // Jika mapel_ids kosong tapi role guru, kita set filter yang mustahil (agar kosong)
+                    jurnalQuery = jurnalQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                    bobotQuery = bobotQuery.eq('mapel_id', '00000000-0000-0000-0000-000000000000');
+                    nilaiQuery = nilaiQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                    kehadiranQuery = kehadiranQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                }
+            } catch (e) {
+                console.error("Error parsing mapel_ids:", e);
+                // Fallback kosong jika parsing gagal
+                jurnalQuery = jurnalQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                bobotQuery = bobotQuery.eq('mapel_id', '00000000-0000-0000-0000-000000000000');
+                nilaiQuery = nilaiQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+                kehadiranQuery = kehadiranQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+            }
+        }
+
         const [
             { data: kelas },
             { data: siswa },
@@ -531,10 +567,10 @@ async function loadData() {
             sb.from('siswa').select('*').eq('tahun_ajaran_id', activeTahunAjaran.id),
             sb.from('mapel').select('*'),
             sb.from('kategori').select('*').order('urutan', { ascending: true }),
-            sb.from('jurnal').select('*').eq('semester_id', activeSemester.id),
-            sb.from('bobot').select('*'),
-            sb.from('nilai').select('*').eq('semester_id', activeSemester.id),
-            sb.from('kehadiran').select('*').eq('semester_id', activeSemester.id)
+            jurnalQuery,
+            bobotQuery,
+            nilaiQuery,
+            kehadiranQuery
         ]);
 
         appData.kelas = kelas || [];
